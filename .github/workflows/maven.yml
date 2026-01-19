@@ -1,13 +1,11 @@
-name: pipline EKS
+name: CICD Pipeline 
 
 on:
   push:
     branches: [ "main" ]
 
-
 jobs:
-  build:
-
+  compile:
     runs-on: self-hosted
 
     steps:
