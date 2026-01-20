@@ -18,4 +18,18 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn compile
+   
+   
+  Secuirty_check:
+    runs-on: self-hosted
+    needs: compile
+
+    steps:
+    - name: Trivy install
+      run: |
+       sudo apt-get install -y  wget gnupg
+       wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+       echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+       sudo apt-get update -y
+       sudo apt-get install -y trivy
       
