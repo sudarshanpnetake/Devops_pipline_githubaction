@@ -84,9 +84,9 @@ jobs:
        name: app-jar
        path: target/*.jar
        uses: actions/checkout@v4
-      with:
+       with:
         # Disabling shallow clones is recommended for improving the relevancy of reporting
-        fetch-depth: 0
+       fetch-depth: 0
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.0.0 # Sends your code to SonarQube,Checks bugs, vulnerabilities, smells, coverage
       env:
@@ -102,7 +102,7 @@ jobs:
           SONAR_TOKEN: ${{ vars.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
   
-     veracode_scan:
+  veracode_scan:
     runs-on: self-hosted
     needs: build_project_and_sonar_scan
     steps:
@@ -112,14 +112,6 @@ jobs:
       with:
         name: app-jar
         path: app
-    - name: Veracode Upload & Scan
-      uses: veracode/veracode-uploadandscan-action@0.2.10
-      with:
-        appname: "MyApp"           # Replace with your Veracode app name
-        createprofile: false
-        filepath: "app/*.jar"
-        vid: ${{ secrets.VERACODE_API_ID }}
-        vkey: ${{ secrets.VERACODE_API_KEY }}
  
   build_docker_image_push_artifactory:
 
