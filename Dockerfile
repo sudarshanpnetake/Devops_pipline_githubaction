@@ -1,11 +1,13 @@
-FROM adoptopenjdk/openjdk11 
-      
-EXPOSE 8080
- 
-ENV APP_HOME /usr/src/app
+FROM eclipse-temurin:17-jre-alpine
 
-COPY target/*.jar $APP_HOME/app.jar
+EXPOSE 8080
+
+ENV APP_HOME=/usr/src/app
 
 WORKDIR $APP_HOME
 
-CMD ["java", "-jar", "app.jar"]
+# JAR passed from pipeline
+ARG JAR_FILE
+COPY ${JAR_FILE} app.jar
+
+ENTRYPOINT ["java","-jar","app.jar"]
