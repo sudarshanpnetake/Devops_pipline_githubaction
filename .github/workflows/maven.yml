@@ -67,13 +67,8 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build Project and Versioned JAR
-      run: |
-        # Build and package
-        mvn package
-        for JAR in target/*.jar; do
-          mv "$JAR" "target/$(basename "$JAR" .jar)-$VERSION.jar"
-        done
-        ls -l target/ mvn package
+      run: mvn package
+        
     - name: upload to atifactory 
       uses: actions/upload-artifactory@v4
       with:
