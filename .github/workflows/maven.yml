@@ -53,5 +53,103 @@ jobs:
         cache: maven
    - name: Unit testcase
      run: mvn test
+  build_project_and_sonar_scan:
+
+    runs-on: self-hosted
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build Project and Versioned JAR
+      run: |
+        # Build and package
+        mvn package
+        # Get version from POM
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "Project version: $VERSION"
+        # Rename JAR with version
+        for JAR in target/*.jar; do
+          mv "$JAR" "target/$(basename "$JAR" .jar)-$VERSION.jar"
+        done
+        ls -l target/ mvn package
+    - name: upload to atifactory 
+      uses: actions/upload-artifactory@v4
+      with:
+       name: app-jar
+       path: target/*.jar
+       uses: actions/checkout@v4
+      with:
+        # Disabling shallow clones is recommended for improving the relevancy of reporting
+        fetch-depth: 0
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v5.0.0 # Sends your code to SonarQube,Checks bugs, vulnerabilities, smells, coverage
+      env:
+        SONAR_TOKEN: ${{ vars.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        
+    - name: SonarQube Quality Gate check
+      id: sonarqube-quality-gate-check
+      uses: sonarsource/sonarqube-quality-gate-action@master #Coverage < threshold,Bugs > threshold,Security rating fails,This is enterprise-grade quality control.
+      with:
+        pollingTimeoutSec: 600
+      env:
+          SONAR_TOKEN: ${{ vars.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+  
+     veracode_scan:
+    runs-on: self-hosted
+    needs: build_project_and_sonar_scan
+    steps:
+    - uses: actions/checkout@v4
+    - name: Varacode Scan
+      uses: actions/download-artifact@v4
+      with:
+        name: app-jar
+        path: app
+    - name: Veracode Upload & Scan
+      uses: veracode/veracode-uploadandscan-action@0.2.10
+      with:
+        appname: "MyApp"           # Replace with your Veracode app name
+        createprofile: false
+        filepath: "app/*.jar"
+        vid: ${{ secrets.VERACODE_API_ID }}
+        vkey: ${{ secrets.VERACODE_API_KEY }}
+ 
+  build_docker_image_push_artifactory:
+
+    runs-on: latest
+    needs: build_project_and_sonar_scan
+    steps:
+    - uses: actions/checkout@v4
+    - name: Dowload JAR artifact
+      uses: actions/download-artifact@v4
+      with :
+       name: app-jar
+       path: app
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ vars.DOCKERHUB_TOKEN }}
+      
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+          push: true
+          tags: sonaligund/db:latest
+
+     
     
    
