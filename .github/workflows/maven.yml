@@ -146,4 +146,3 @@ build_docker_image_push:
           tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ env.ARTIFACT }}:${{ env.VERSION }}
           build-args: |
             JAR_FILE=app/*.jar
-	  
